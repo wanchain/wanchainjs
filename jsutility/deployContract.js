@@ -17,7 +17,7 @@ var solc = require('solc');
 var compiled = solc.compile(content, 1);
 var myTestContract = web3.eth.contract(JSON.parse(compiled.contracts[':PrivacyTokenBase'].interface));
 
-console.log(compiled.contracts.[':PrivacyTokenBase'].interface);
+console.log(compiled.contracts[':PrivacyTokenBase'].interface);
 
 var config_privatekey = 'daa2fbee5ee569bc64842f5a386e7037612e0736b52e41749d52b616beaca65e';
 var config_pubkey = '0xc29258c409380d34c9255406e8204212da552f92'

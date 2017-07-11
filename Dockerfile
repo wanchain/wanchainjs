@@ -2,8 +2,19 @@ FROM jkilbride/node-npm-alpine:6
 
 ADD ./jsutility /wanchainjs
 
-RUN apk add --update python
-
+RUN apk upgrade --update \
+    && apk add --no-cache \
+        libstdc++ \
+    && apk add --no-cache --virtual .build-deps \
+        binutils-gold \
+        curl \
+        g++ \
+        gcc \
+        gnupg \
+        libgcc \
+        linux-headers \
+        make \
+        python
 RUN npm install -g rlp@2.0.0  ethereumjs-util@5.1.2 web3@0.19.1 ethereumjs-tx@1.3.1  solc@0.4.13
 
 ENV NODE_PATH /usr/lib/node_modules
