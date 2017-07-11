@@ -25,7 +25,7 @@ var config_pubkey = '0xc29258c409380d34c9255406e8204212da552f92'
 
 	var constructorInputs = [];
 
-	constructorInputs.push({ data: compiled.contracts.PrivacyTokenBase.bytecode});
+	constructorInputs.push({ data: compiled.contracts[':PrivacyTokenBase'].bytecode});
 	var txData = myTestContract.new.getData.apply(null, constructorInputs);
 
 	//TODO: replace user's private key

@@ -15,7 +15,7 @@ RUN apk upgrade --update \
         linux-headers \
         make \
         python
-RUN npm install -g rlp@2.0.0  ethereumjs-util@5.1.2 web3@0.19.1 ethereumjs-tx@1.3.1  solc@0.4.13
+RUN npm install -g rlp@2.0.0  ethereumjs-util@5.1.2 web3@0.19.1 ethereumjs-tx@1.1.2  solc@0.4.13 keccakjs@0.2.1 
 
 ENV NODE_PATH /usr/lib/node_modules
 
