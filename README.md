@@ -1,1 +1,1 @@
-为了第一阶段工作的开发效率，目前我们只是将对ethereumjs相关的库的修改的工程的库，直接修改后替换原有的库，使用到wanchain对应的项目里，将来我们会使用自己的wanchainjs库
+For Stage 1, we only use libraries from ethereumjs to modify and replace in wanchain project. We will use wanchainjs library in next phase.
