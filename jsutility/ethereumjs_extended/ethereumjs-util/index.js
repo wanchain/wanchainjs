@@ -797,6 +797,11 @@ function _utilPubkey2SecpFormat(utilPubKeyStr) {
   return secp256k1.publicKeyConvert(new Buffer(utilPubKeyStr, 'hex'));
 }
 
+exports.pubkeyStrCompressed = function(pubStr){
+  buf = _utilPubkey2SecpFormat(pubStr);
+  return exports.bufferToHex(buf);
+}
+
 //get secp256k1 format public key buf
 function _secpPUBKBufFromPrivate(privateKey) {
   var pubStr = exports.pulicKeyFromPrivateKey(privateKey);
