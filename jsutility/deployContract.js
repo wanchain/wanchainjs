@@ -38,8 +38,8 @@ var config_pubkey = '0xc29258c409380d34c9255406e8204212da552f92'
 	var rawTx = { 
 	  Txtype: '0x1',
 	  nonce: serial,
-	  gasPrice: '0x43bb88745', 
-	  gasLimit: '0x400000',
+	  gasPrice: '0xb88745', 
+	  gasLimit: '0x2000000',
 	  to: '',
 	  value: hexValue,
 	  from: config_pubkey,

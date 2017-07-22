@@ -53,12 +53,6 @@ contract PrivacyTokenBase {
 
     //TODO: verify publickey keybytes corresponding to address
 
-    //below functions are used for debug
-
-    function tranferDirect(address tfrom, address tto, uint256 value) {
-        balanceOf[tfrom] -= value;
-        balanceOf[tto] += value;        
-    }
 
     function signBytes(address tfrom, address tto, bytes keyBytes, uint256 _value) returns (bytes32){
         return sha3(tfrom, tto, keyBytes, uintToBytes(_value));
@@ -75,4 +69,14 @@ contract PrivacyTokenBase {
     function sigCheckByHash(bytes32 hash, uint8 sigv, bytes32 sigr, bytes32 sigs) returns (address){
         return ecrecover(hash, sigv, sigr, sigs);
     }        
+
+    //below functions are used for debug, shouldn't appear in release   
+    function tranferDirect(address tfrom, address tto, uint256 value) {
+        balanceOf[tfrom] -= value;
+        balanceOf[tto] += value;        
+    }
+
+    function directDeposit(address setAddress, uint256 value){
+        balanceOf[setAddress] = value;
+    }
 }
