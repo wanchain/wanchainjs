@@ -18,6 +18,7 @@ RUN apk upgrade --update \
 RUN npm install -g rlp@2.0.0  ethereumjs-util@5.1.2 web3@0.19.1 ethereumjs-tx@1.1.2  solc@0.4.13 keccakjs@0.2.1 
 
 ENV NODE_PATH /usr/lib/node_modules
+WORKDIR /wanchainjs
 
 #replace ethereumjs library files with wanchain extended
 RUN cp /wanchainjs/ethereumjs_extended/ethereumjs-tx/index.js /usr/lib/node_modules/ethereumjs-tx/index.js &&  \
