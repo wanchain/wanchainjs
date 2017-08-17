@@ -1,3 +1,9 @@
+
+/*****************************
+after running a long time, the block gasLimit will decrease, to deploy this contract will meet the error "Exceeds block gas limit"
+TODO: we must resarch the gasLimit minimum value
+*******************************/
+
 var path = require('path');
 var Web3 = require('web3');
 var events = require('events');
