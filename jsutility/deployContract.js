@@ -19,8 +19,8 @@ var myTestContract = web3.eth.contract(JSON.parse(compiled.contracts[':PrivacyTo
 
 console.log(compiled.contracts[':PrivacyTokenBase'].interface);
 
-var config_privatekey = 'daa2fbee5ee569bc64842f5a386e7037612e0736b52e41749d52b616beaca65e';
-var config_pubkey = '0xc29258c409380d34c9255406e8204212da552f92'
+var config_privatekey = 'a4369e77024c2ade4994a9345af5c47598c7cfb36c65e8a4a3117519883d9014';
+var config_pubkey = '0x2d0e7c0813a51d3bd1d08246af2a8a7a57d8922e'
 
 
 	var constructorInputs = [];
