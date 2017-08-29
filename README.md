@@ -11,7 +11,9 @@ Alternatiely, use dev_setup.sh to run our prebuild docker image from aliyun
 ## Step
 
 ###1. enter docker container
+
 ###2. run "node deployContract.js" to deploy the contract to geth
+
 ###3. run "node privacyTest.js" to test
 
 Read the jsutility/readme for details.
