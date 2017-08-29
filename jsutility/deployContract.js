@@ -7,6 +7,7 @@ TODO: we must resarch the gasLimit minimum value
 var path = require('path');
 var Web3 = require('web3');
 var events = require('events');
+var fs = require("fs");
 
 var Tx = require('ethereumjs-tx');
 var ethUtil = require('ethereumjs-util');
@@ -26,9 +27,12 @@ var myTestContract = web3.eth.contract(JSON.parse(compiled.contracts[':PrivacyTo
 console.log(compiled.contracts[':PrivacyTokenBase'].interface);
 
 var config_privatekey = 'a4369e77024c2ade4994a9345af5c47598c7cfb36c65e8a4a3117519883d9014';
-var config_pubkey = '0x2d0e7c0813a51d3bd1d08246af2a8a7a57d8922e'
+var config_pubkey = '0x2d0e7c0813a51d3bd1d08246af2a8a7a57d8922e';
 
 
+
+
+let globalHash = "";
 	var constructorInputs = [];
 
 	constructorInputs.push({ data: compiled.contracts[':PrivacyTokenBase'].bytecode});
@@ -56,10 +60,24 @@ var config_pubkey = '0x2d0e7c0813a51d3bd1d08246af2a8a7a57d8922e'
 	var serializedTx = tx.serialize();
 	console.log("serializedTx:" + serializedTx.toString('hex'));
 	web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'), function(err, hash){
-	   if(!err){
-	   	console.log('tx hash');
-	   	console.log(hash);
-       }else {
-	       console.log(err);
-	   }
-	});	
+        if(!err){
+            console.log('tx hash:'+hash);
+            globalHash = hash;
+            let filter = web3.eth.filter('latest');
+            filter.watch(function(err,hash){
+                if(err ){
+                    console.log("err:"+err);
+                }else{
+                    let receipt = web3.eth.getTransactionReceipt(globalHash);
+                    if(receipt){
+                        filter.stopWatching();
+                        console.log("contractAddress:"+receipt.contractAddress);
+                        fs.writeFileSync("./contractAddress", receipt.contractAddress);
+                    }
+                }
+            });
+        }else {
+            console.log(err);
+        }
+	});
+
