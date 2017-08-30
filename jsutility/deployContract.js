@@ -1,6 +1,13 @@
+
+/*****************************
+after running a long time, the block gasLimit will decrease, to deploy this contract will meet the error "Exceeds block gas limit"
+TODO: we must resarch the gasLimit minimum value
+*******************************/
+
 var path = require('path');
 var Web3 = require('web3');
 var events = require('events');
+var fs = require("fs");
 
 var Tx = require('ethereumjs-tx');
 var ethUtil = require('ethereumjs-util');
@@ -15,14 +22,18 @@ var content = fs.readFileSync(path.join(srcDir, "privacyTokenBase.sol"), 'utf8')
 //var content = fs.readFileSync("beida.js", 'utf8');
 var solc = require('solc');
 var compiled = solc.compile(content, 1);
+console.log(compiled);
 var myTestContract = web3.eth.contract(JSON.parse(compiled.contracts[':PrivacyTokenBase'].interface));
 
 console.log(compiled.contracts[':PrivacyTokenBase'].interface);
 
-var config_privatekey = 'daa2fbee5ee569bc64842f5a386e7037612e0736b52e41749d52b616beaca65e';
-var config_pubkey = '0xc29258c409380d34c9255406e8204212da552f92'
+var config_privatekey = 'a4369e77024c2ade4994a9345af5c47598c7cfb36c65e8a4a3117519883d9014';
+var config_pubkey = '0x2d0e7c0813a51d3bd1d08246af2a8a7a57d8922e';
 
 
+
+
+let globalHash = "";
 	var constructorInputs = [];
 
 	constructorInputs.push({ data: compiled.contracts[':PrivacyTokenBase'].bytecode});
@@ -50,10 +61,24 @@ var config_pubkey = '0xc29258c409380d34c9255406e8204212da552f92'
 	var serializedTx = tx.serialize();
 	console.log("serializedTx:" + serializedTx.toString('hex'));
 	web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'), function(err, hash){
-	   if(!err){
-	   	console.log('tx hash');
-	   	console.log(hash);
-       }else {
-	       console.log(err);
-	   }
-	});	
+        if(!err){
+            console.log('tx hash:'+hash);
+            globalHash = hash;
+            let filter = web3.eth.filter('latest');
+            filter.watch(function(err,hash){
+                if(err ){
+                    console.log("err:"+err);
+                }else{
+                    let receipt = web3.eth.getTransactionReceipt(globalHash);
+                    if(receipt){
+                        filter.stopWatching();
+                        console.log("contractAddress:"+receipt.contractAddress);
+                        fs.writeFileSync("./contractAddress", receipt.contractAddress);
+                    }
+                }
+            });
+        }else {
+            console.log(err);
+        }
+	});
+
