@@ -28,7 +28,7 @@ var config_address = '0x2d0e7c0813a51d3bd1d08246af2a8a7a57d8922e'
 
 
 //TODO: reset private key buffer immediately after use it
-function wchainSendRawTransaction(sender, senderPrivateKey, payload, log){
+async function wchainSendRawTransaction(sender, senderPrivateKey, payload, log){
 	var privateKey = new Buffer(senderPrivateKey, 'hex');//from.so_privatekey
 	var serial = '0x' + web3.eth.getTransactionCount(config_address).toString(16);
 	var rawTx = {
@@ -44,16 +44,37 @@ function wchainSendRawTransaction(sender, senderPrivateKey, payload, log){
 	var tx = new Tx(rawTx);
 	tx.sign(privateKey);
 	var serializedTx = tx.serialize();
-	web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'), function(err, hash){
-	   if(!err){
-	   	console.log(log + 'tx hash:');
-	   	console.log("    " + hash);
-       }else {
-	       console.log(err);
-	   }
-	});		
+	let hash = web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'));
+    console.log(log + 'tx hash:'+hash);
+    let receipt = await getTransactionReceipt(hash);
+    console.log(receipt);
 }
-function wchainSendOTARawTransaction(sender, senderPrivateKey, payload, log){
+
+function getTransactionReceipt(txHash)
+{
+    return new Promise(function(success,fail){
+        let filter = web3.eth.filter('latest');
+        let blockAfter = 0;
+        filter.watch(function(err,blockhash){
+            if(err ){
+                console.log("err:"+err);
+            }else{
+                let receipt = web3.eth.getTransactionReceipt(txHash);
+                blockAfter += 1;
+                if(receipt){
+                    filter.stopWatching();
+                    success(receipt);
+                    return receipt;
+                }else if(blockAfter > 6){
+                    fail("Get receipt timeout");
+				}
+            }
+        });
+    });
+}
+
+
+async function wchainSendOTARawTransaction(sender, senderPrivateKey, payload, log){
 	var privateKey = new Buffer(senderPrivateKey, 'hex');//from.so_privatekey
 	var serial = '0x' + web3.eth.getTransactionCount(config_address).toString(16);
 	var rawTx = {
@@ -71,23 +92,19 @@ function wchainSendOTARawTransaction(sender, senderPrivateKey, payload, log){
 	var tx = new Tx(rawTx);
 	tx.sign(privateKey);
 	var serializedTx = tx.serialize();
-	web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'), function(err, hash){
-	   if(!err){
-	   	console.log(log + 'tx hash:');
-	   	console.log("    " + hash);
-       }else {
-	       console.log(err);
-	   }
-	});		
+	let hash = web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'));
 	console.log("serializeTx" + serializedTx.toString('hex'));
+    console.log(log + 'tx hash:'+hash);
+    let receipt = await getTransactionReceipt(hash);
+    console.log(receipt);
 }
 
-function i_initAsset(initialOtaAddress, otaKeyBytes, value){
+async function i_initAsset(initialOtaAddress, otaKeyBytes, value){
 	payload = contractInstance.initAsset.getData(initialOtaAddress, otaKeyBytes, value);
-	wchainSendRawTransaction(config_address, config_privatekey, payload, "call contract initAsset");
+	await wchainSendRawTransaction(config_address, config_privatekey, payload, "call contract initAsset");
 }
 
-function i_privacyTransfer(otaSenderAddress, otaReceiverAddress, receiverKeyBytes, value, senderPrivateKey){
+async function i_privacyTransfer(otaSenderAddress, otaReceiverAddress, receiverKeyBytes, value, senderPrivateKey){
 	var hash = ethUtil.otaHash(otaSenderAddress, otaReceiverAddress,
 		receiverKeyBytes, ethUtil.numberToBytes32(value));
 	var sig = ethUtil.otaSign(hash, senderPrivateKey);
@@ -97,36 +114,48 @@ function i_privacyTransfer(otaSenderAddress, otaReceiverAddress, receiverKeyByte
 		'0x' + sig.r.toString('hex'),
 		'0x' + sig.s.toString('hex'));
 	//todo:change to ethUtil.sendOTATransaction
-	wchainSendOTARawTransaction(config_address, config_privatekey, payload, "call privacy Transfer");
+	await wchainSendOTARawTransaction(config_address, config_privatekey, payload, "call privacy Transfer");
 }
 
-function i_directDeposit(setAddress, value){
+async function i_directDeposit(setAddress, value){
 	payload = contractInstance.directDeposit.getData(setAddress, value);
-	wchainSendRawTransaction(config_address, config_privatekey, payload, "call contract i_directDeposit");
+	await wchainSendRawTransaction(config_address, config_privatekey, payload, "call contract i_directDeposit");
 }
-/*
-    1. generate a one time Key and compute corresponding private key
-*/
-var pubkeyStr = ethUtil.publicKeyFromPrivateKey(config_privatekey);
-var ota = ethUtil.generateOTAPublicKey(pubkeyStr, pubkeyStr);
-var bufOTAPrivate = ethUtil.computeOTAPrivateKey(ota.OtaA1, ota.OtaS1, config_privatekey,config_privatekey);
-var otaKeyBytesCompressed = ethUtil.pubkeyStrCompressed(ota.OtaA1) + ethUtil.pubkeyStrCompressed(ota.OtaS1);
-var otaAddress = ethUtil.bufferToHex(ethUtil.publicToAddress('0x' + ota.OtaA1));
-/*
-    2. initAsset value for ota
-*/
-i_initAsset(otaAddress, otaKeyBytesCompressed, 8888);
-//check otaAdress 
-contractInstance.balanceOf(otaAddress)
-/*
-    3.generate another ota address
-*/
-var otaDest = ethUtil.generateOTAPublicKey(pubkeyStr, pubkeyStr);
-var otaDestPrivate = ethUtil.computeOTAPrivateKey(otaDest.OtaA1, otaDest.OtaS1, config_privatekey,config_privatekey);
-var otaDestKeyBytesCompressed = ethUtil.pubkeyStrCompressed(otaDest.OtaA1) + ethUtil.pubkeyStrCompressed(otaDest.OtaS1);
-var otaDestAddress = ethUtil.bufferToHex(ethUtil.publicToAddress('0x' + otaDest.OtaA1));
+
+async function main(){
+
+    /*
+        1. generate a one time Key and compute corresponding private key
+    */
+    var pubkeyStr = ethUtil.publicKeyFromPrivateKey(config_privatekey);
+    var ota = ethUtil.generateOTAPublicKey(pubkeyStr, pubkeyStr);
+    var bufOTAPrivate = ethUtil.computeOTAPrivateKey(ota.OtaA1, ota.OtaS1, config_privatekey,config_privatekey);
+    var otaKeyBytesCompressed = ethUtil.pubkeyStrCompressed(ota.OtaA1) + ethUtil.pubkeyStrCompressed(ota.OtaS1);
+    var otaAddress = ethUtil.bufferToHex(ethUtil.publicToAddress('0x' + ota.OtaA1));
+    /*
+        2. initAsset value for ota
+    */
+    await i_initAsset(otaAddress, otaKeyBytesCompressed, 8888);
+//check otaAdress
+    console.log("Old balance of "+otaAddress+" :"+contractInstance.balanceOf(otaAddress));
+    /*
+        3.generate another ota address
+    */
+    var otaDest = ethUtil.generateOTAPublicKey(pubkeyStr, pubkeyStr);
+    var otaDestPrivate = ethUtil.computeOTAPrivateKey(otaDest.OtaA1, otaDest.OtaS1, config_privatekey,config_privatekey);
+    var otaDestKeyBytesCompressed = ethUtil.pubkeyStrCompressed(otaDest.OtaA1) + ethUtil.pubkeyStrCompressed(otaDest.OtaS1);
+    var otaDestAddress = ethUtil.bufferToHex(ethUtil.publicToAddress('0x' + otaDest.OtaA1));
 //transfer from customized token from ota address
-i_privacyTransfer(otaAddress, otaDestAddress, otaDestKeyBytesCompressed, 6666, ethUtil.bufferToHex(bufOTAPrivate).slice(2));
+    console.log("Old balance of "+otaDestAddress+" :"+contractInstance.balanceOf(otaDestAddress));
+    await i_privacyTransfer(otaAddress, otaDestAddress, otaDestKeyBytesCompressed, 6666, ethUtil.bufferToHex(bufOTAPrivate).slice(2));
+    let newBalance = contractInstance.balanceOf(otaDestAddress);
+    console.log("New balance of "+otaDestAddress+":"+newBalance);
+    console.log("New balance of "+otaAddress+" :"+contractInstance.balanceOf(otaAddress));
+
 
 //check the balance of otaDestAddress
+}
+
+main();
+
 

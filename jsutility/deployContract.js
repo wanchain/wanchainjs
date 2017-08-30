@@ -22,6 +22,7 @@ var content = fs.readFileSync(path.join(srcDir, "privacyTokenBase.sol"), 'utf8')
 //var content = fs.readFileSync("beida.js", 'utf8');
 var solc = require('solc');
 var compiled = solc.compile(content, 1);
+console.log(compiled);
 var myTestContract = web3.eth.contract(JSON.parse(compiled.contracts[':PrivacyTokenBase'].interface));
 
 console.log(compiled.contracts[':PrivacyTokenBase'].interface);

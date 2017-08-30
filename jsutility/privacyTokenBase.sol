@@ -5,13 +5,15 @@ contract PrivacyTokenBase {
     mapping (address => uint256) public balanceOf;
     mapping (address => bytes)   public keyOf;//key
 
+    event Debug(bytes32 msg);
+
     function PrivacyTokenBase(){
         mInitialized = false;
     }
 
     function initAsset(address initialBase, bytes baseKeyBytes, uint256 value) returns (bool success){    
-        if(mInitialized == true)
-            return false;
+        //if(mInitialized == true)
+        //    return false;
             
         mInitialized = true;
         balanceOf[initialBase] = value;
@@ -21,19 +23,25 @@ contract PrivacyTokenBase {
 
     function privacyTransfer(address tfrom, address tto, bytes keyBytes, uint256 _value, uint8 sigv, bytes32 sigr, bytes32 sigs) returns (string) {
         //if (balanceOf[tto] != 0) throw;
-        if(balanceOf[tfrom] < _value) return "hhhh";
+        if(balanceOf[tfrom] < _value){
+            Debug("Not enough balancce");
+            return "hhhh";
+         }
         
         // check signature signed by tfrom
         bytes32 sv = uintToBytes(_value);
         bytes32 inputHash = sha3(tfrom, tto, keyBytes, sv);
         address recoveredAddress = ecrecover(inputHash, sigv, sigr, sigs);
         
-        if(recoveredAddress != tfrom)
+        if(recoveredAddress != tfrom){
+            Debug("address not matched");
             return "address not matched";
+        }
             
         balanceOf[tfrom] -= _value;
         balanceOf[tto] += _value;
         keyOf[tto] = keyBytes;
+        Debug("success");
         return "success";
     }
     
