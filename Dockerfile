@@ -1,4 +1,4 @@
-FROM jkilbride/node-npm-alpine:6
+FROM jkilbride/node-npm-alpine:7
 
 ADD ./jsutility /wanchainjs
 
