@@ -711,8 +711,8 @@ exports.otaHash = function(){
         throw "invalid parameters";
     }
     var buf = new Buffer([]);
-    for (i = 0; i < arguments.length; i++){
-        item = exports.toBuffer(arguments[i]);
+    for (let i = 0; i < arguments.length; i++){
+        let item = exports.toBuffer(arguments[i]);
         buf = Buffer.concat([buf, item]);
     }
     return exports.sha3(buf);

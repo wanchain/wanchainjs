@@ -113,6 +113,18 @@ async function i_privacyTransfer(otaSenderAddress, otaReceiverAddress, receiverK
 		sig.v,
 		'0x' + sig.r.toString('hex'),
 		'0x' + sig.s.toString('hex'));
+
+    var senderPubKey = ethUtil.ecrecover(hash, sig.v, '0x'+sig.r.toString('hex'), '0x'+sig.s.toString('hex'));
+    var calAddr = ethUtil.publicToAddress(senderPubKey);
+    calAddr = '0x' +calAddr.toString('hex');
+    console.log("The expect sender is ",calAddr);
+    console.log(hash.toString('hex'));
+
+    console.log(otaSenderAddress.toString('hex'));
+    console.log(otaReceiverAddress.toString('hex'));
+    console.log(receiverKeyBytes.toString('hex'));
+    console.log(ethUtil.numberToBytes32(value));
+
 	//todo:change to ethUtil.sendOTATransaction
 	await wchainSendOTARawTransaction(config_address, config_privatekey, payload, "call privacy Transfer");
 }
@@ -143,7 +155,7 @@ async function main(){
     */
     var otaDest = ethUtil.generateOTAPublicKey(pubkeyStr, pubkeyStr);
     var otaDestPrivate = ethUtil.computeOTAPrivateKey(otaDest.OtaA1, otaDest.OtaS1, config_privatekey,config_privatekey);
-    var otaDestKeyBytesCompressed = ethUtil.pubkeyStrCompressed(otaDest.OtaA1) + ethUtil.pubkeyStrCompressed(otaDest.OtaS1);
+    var otaDestKeyBytesCompressed = ethUtil.pubkeyStrCompressed(otaDest.OtaA1) + ethUtil.pubkeyStrCompressed(otaDest.OtaS1).slice(2);
     var otaDestAddress = ethUtil.bufferToHex(ethUtil.publicToAddress('0x' + otaDest.OtaA1));
 //transfer from customized token from ota address
     console.log("Old balance of "+otaDestAddress+" :"+contractInstance.balanceOf(otaDestAddress));
@@ -151,6 +163,17 @@ async function main(){
     let newBalance = contractInstance.balanceOf(otaDestAddress);
     console.log("New balance of "+otaDestAddress+":"+newBalance);
     console.log("New balance of "+otaAddress+" :"+contractInstance.balanceOf(otaAddress));
+    console.log(contractInstance.grecovered.call());
+    console.log(contractInstance.glastHash.call());
+    console.log(contractInstance.gsigv.call());
+    console.log(contractInstance.gsigr.call());
+    console.log(contractInstance.gsigs.call());
+
+    console.log("----------");
+    console.log(contractInstance.gtfrom.call());
+    console.log(contractInstance.gtto.call());
+    console.log(contractInstance.gkeyBytes.call());
+    console.log(contractInstance.gsv.call());
 
 
 //check the balance of otaDestAddress
