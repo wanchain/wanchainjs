@@ -7,6 +7,10 @@ contract WanchainStamps {
     //ws = 
     // 0 means  never in
     uint64 public stampPrice; //
+    // design the stamp value is 1,2,4,8,16,32,64,128
+    // that mean 2**0 2**1 .... 2**7
+    // there is only one stamp in a transaction.
+    // when estimateStampLimit, we return these value too.
     mapping (address => uint) public oneWs;
     mapping (address => uint) public twoWs;
 
