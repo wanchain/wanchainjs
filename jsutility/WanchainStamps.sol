@@ -5,9 +5,10 @@ pragma solidity ^0.4.0;
 contract WanchainStamps {
     //gas cost for stamps
     //ws = 
-    // 0 means  never in 
-    mapping (address => uint) oneWs;
-    mapping (address => uint) twoWs;
+    // 0 means  never in
+    uint64 public stampPrice; //
+    mapping (address => uint) public oneWs;
+    mapping (address => uint) public twoWs;
 
     mapping (address => bytes) keys4Stamp;
 
