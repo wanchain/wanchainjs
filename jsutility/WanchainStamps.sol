@@ -20,7 +20,7 @@ contract WanchainStamps {
     mapping (address => bytes) public StampListFour;
     mapping (address => bytes) public StampListEight;
     mapping (address => bytes) public StampListSixteen;
-
+    stampType public lastStampType = stampType.TypeTwo;
     enum stampType {
         TypeOne,
         TypeTwo,

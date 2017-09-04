@@ -30,7 +30,7 @@ var content = fs.readFileSync(path.join(srcDir, contractName+".sol"), 'utf8');
 //var content = fs.readFileSync("beida.js", 'utf8');
 var solc = require('solc');
 var compiled = solc.compile(content, 1);
-//console.log(compiled);
+console.log(compiled);
 var myTestContract = web3.eth.contract(JSON.parse(compiled.contracts[':'+contractName].interface));
 
 console.log(compiled.contracts[':'+contractName].interface);

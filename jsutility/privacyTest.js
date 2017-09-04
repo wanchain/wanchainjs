@@ -142,7 +142,7 @@ async function main(){
     var pubkeyStr = ethUtil.publicKeyFromPrivateKey(config_privatekey);
     var ota = ethUtil.generateOTAPublicKey(pubkeyStr, pubkeyStr);
     var bufOTAPrivate = ethUtil.computeOTAPrivateKey(ota.OtaA1, ota.OtaS1, config_privatekey,config_privatekey);
-    var otaKeyBytesCompressed = ethUtil.pubkeyStrCompressed(ota.OtaA1) + ethUtil.pubkeyStrCompressed(ota.OtaS1);
+    var otaKeyBytesCompressed = ethUtil.pubkeyStrCompressed(ota.OtaA1) + ethUtil.pubkeyStrCompressed(ota.OtaS1).slice(2);
     var otaAddress = ethUtil.bufferToHex(ethUtil.publicToAddress('0x' + ota.OtaA1));
     /*
         2. initAsset value for ota

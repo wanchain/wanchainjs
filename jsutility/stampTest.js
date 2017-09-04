@@ -24,31 +24,17 @@ var contractInstanceAddress = fs.readFileSync("WanchainStamps.addr","utf8");
 var contractInstance = privacyContract.at(contractInstanceAddress);
 
 var config_privatekey = 'a4369e77024c2ade4994a9345af5c47598c7cfb36c65e8a4a3117519883d9014';
-var config_address = '0x2d0e7c0813a51d3bd1d08246af2a8a7a57d8922e'
+var config_address = '0x2d0e7c0813a51d3bd1d08246af2a8a7a57d8922e';
 
-
-//TODO: reset private key buffer immediately after use it
-async function wchainSendRawTransaction(sender, senderPrivateKey, payload, log){
-	var privateKey = new Buffer(senderPrivateKey, 'hex');//from.so_privatekey
-	var serial = '0x' + web3.eth.getTransactionCount(config_address).toString(16);
-	var rawTx = {
-	  Txtype: '0x1',
-	  nonce: serial,
-	  gasPrice: '0x88745',
-	  gasLimit: '0x1000000',
-	  to: contractInstanceAddress,//contract address
-	  value: '0x00',
-	  data: payload
-	};
-
-	var tx = new Tx(rawTx);
-	tx.sign(privateKey);
-	var serializedTx = tx.serialize();
-	let hash = web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'));
-    console.log(log + 'tx hash:'+hash);
-    let receipt = await getTransactionReceipt(hash);
-    console.log(receipt);
+let stampType = {
+    TypeOne:0,
+    TypeTwo:1,
+    TypeFour:2,
+    TypeEight:3,
+    TypeSixteen:4
 }
+
+
 
 function getTransactionReceipt(txHash)
 {
@@ -74,65 +60,39 @@ function getTransactionReceipt(txHash)
 }
 
 
-async function wchainSendOTARawTransaction(sender, senderPrivateKey, payload, log){
-	var privateKey = new Buffer(senderPrivateKey, 'hex');//from.so_privatekey
-	var serial = '0x' + web3.eth.getTransactionCount(config_address).toString(16);
-	var rawTx = {
-	  Txtype: '0x0',
-	  nonce: serial,
-	  gasPrice: '0x88745',
-	  gasLimit: '0x1000000',
-	  to: contractInstanceAddress,//contract address
-	  value: '0x00',
-	  //from: config_address,
-	  data: payload
-	};
-	console.log("payload: " + rawTx.data);
 
-	var tx = new Tx(rawTx);
-	tx.sign(privateKey);
-	var serializedTx = tx.serialize();
-	let hash = web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'));
-	console.log("serializeTx" + serializedTx.toString('hex'));
-    console.log(log + 'tx hash:'+hash);
-    let receipt = await getTransactionReceipt(hash);
+
+async function i_buyWanchainStamp(type, otaAddress,  otaKeyBytes,  senderPrivateKey){
+
+    var privateKey = new Buffer(senderPrivateKey, 'hex');//from.so_privatekey
+    var serial = '0x' + web3.eth.getTransactionCount(config_address).toString(16);
+    let payload = contractInstance.buyStamp.getData(type, otaAddress,otaKeyBytes);
+    var rawTx = {
+        Txtype: '0x0',
+        nonce: serial,
+        gasPrice: '0x88745',
+        gasLimit: '0x1000000',
+        to: contractInstanceAddress,//contract address
+        value: '0x00',
+        data: payload
+    };
+    console.log("payload: " + rawTx.data);
+
+    var tx = new Tx(rawTx);
+    tx.sign(privateKey);
+    var serializedTx = tx.serialize();
+    let hash = web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'));
+    console.log("serializeTx" + serializedTx.toString('hex'));
+    console.log('tx hash:'+hash);
+    try {
+        let receipt = await getTransactionReceipt(hash);
+    }catch(e){
+        console.log(e);
+    }
     console.log(receipt);
 }
 
-async function i_initAsset(initialOtaAddress, otaKeyBytes, value){
-	payload = contractInstance.initAsset.getData(initialOtaAddress, otaKeyBytes, value);
-	await wchainSendRawTransaction(config_address, config_privatekey, payload, "call contract initAsset");
-}
 
-async function i_privacyTransfer(otaSenderAddress, otaReceiverAddress, receiverKeyBytes, value, senderPrivateKey){
-	var hash = ethUtil.otaHash(otaSenderAddress, otaReceiverAddress,
-		receiverKeyBytes, ethUtil.numberToBytes32(value));
-	var sig = ethUtil.otaSign(hash, senderPrivateKey);
-	payload = contractInstance.privacyTransfer.getData(
-		otaSenderAddress, otaReceiverAddress, receiverKeyBytes, value,
-		sig.v,
-		'0x' + sig.r.toString('hex'),
-		'0x' + sig.s.toString('hex'));
-
-    var senderPubKey = ethUtil.ecrecover(hash, sig.v, '0x'+sig.r.toString('hex'), '0x'+sig.s.toString('hex'));
-    var calAddr = ethUtil.publicToAddress(senderPubKey);
-    calAddr = '0x' +calAddr.toString('hex');
-    console.log("The expect sender is ",calAddr);
-    console.log(hash.toString('hex'));
-
-    console.log(otaSenderAddress.toString('hex'));
-    console.log(otaReceiverAddress.toString('hex'));
-    console.log(receiverKeyBytes.toString('hex'));
-    console.log(ethUtil.numberToBytes32(value));
-
-	//todo:change to ethUtil.sendOTATransaction
-	await wchainSendOTARawTransaction(config_address, config_privatekey, payload, "call privacy Transfer");
-}
-
-async function i_directDeposit(setAddress, value){
-	payload = contractInstance.directDeposit.getData(setAddress, value);
-	await wchainSendRawTransaction(config_address, config_privatekey, payload, "call contract i_directDeposit");
-}
 
 async function main(){
 
@@ -142,39 +102,13 @@ async function main(){
     var pubkeyStr = ethUtil.publicKeyFromPrivateKey(config_privatekey);
     var ota = ethUtil.generateOTAPublicKey(pubkeyStr, pubkeyStr);
     var bufOTAPrivate = ethUtil.computeOTAPrivateKey(ota.OtaA1, ota.OtaS1, config_privatekey,config_privatekey);
-    var otaKeyBytesCompressed = ethUtil.pubkeyStrCompressed(ota.OtaA1) + ethUtil.pubkeyStrCompressed(ota.OtaS1);
+    var otaKeyBytesCompressed = ethUtil.pubkeyStrCompressed(ota.OtaA1) + ethUtil.pubkeyStrCompressed(ota.OtaS1).slice(2);
     var otaAddress = ethUtil.bufferToHex(ethUtil.publicToAddress('0x' + ota.OtaA1));
-    /*
-        2. initAsset value for ota
-    */
-    await i_initAsset(otaAddress, otaKeyBytesCompressed, 8888);
-//check otaAdress
-    console.log("Old balance of "+otaAddress+" :"+contractInstance.balanceOf(otaAddress));
-    /*
-        3.generate another ota address
-    */
-    var otaDest = ethUtil.generateOTAPublicKey(pubkeyStr, pubkeyStr);
-    var otaDestPrivate = ethUtil.computeOTAPrivateKey(otaDest.OtaA1, otaDest.OtaS1, config_privatekey,config_privatekey);
-    var otaDestKeyBytesCompressed = ethUtil.pubkeyStrCompressed(otaDest.OtaA1) + ethUtil.pubkeyStrCompressed(otaDest.OtaS1).slice(2);
-    var otaDestAddress = ethUtil.bufferToHex(ethUtil.publicToAddress('0x' + otaDest.OtaA1));
-//transfer from customized token from ota address
-    console.log("Old balance of "+otaDestAddress+" :"+contractInstance.balanceOf(otaDestAddress));
-    await i_privacyTransfer(otaAddress, otaDestAddress, otaDestKeyBytesCompressed, 6666, ethUtil.bufferToHex(bufOTAPrivate).slice(2));
-    let newBalance = contractInstance.balanceOf(otaDestAddress);
-    console.log("New balance of "+otaDestAddress+":"+newBalance);
-    console.log("New balance of "+otaAddress+" :"+contractInstance.balanceOf(otaAddress));
-    console.log(contractInstance.grecovered.call());
-    console.log(contractInstance.glastHash.call());
-    console.log(contractInstance.gsigv.call());
-    console.log(contractInstance.gsigr.call());
-    console.log(contractInstance.gsigs.call());
 
-    console.log("----------");
-    console.log(contractInstance.gtfrom.call());
-    console.log(contractInstance.gtto.call());
-    console.log(contractInstance.gkeyBytes.call());
-    console.log(contractInstance.gsv.call());
-
+    /*
+        2. buy the wanchain stamp
+     */
+    await i_buyWanchainStamp(stampType.TypeTwo, otaAddress, otaKeyBytesCompressed, ethUtil.bufferToHex(bufOTAPrivate).slice(2));
 
 //check the balance of otaDestAddress
 }
