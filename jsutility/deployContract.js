@@ -1,8 +1,4 @@
-
-/*****************************
-after running a long time, the block gasLimit will decrease, to deploy this contract will meet the error "Exceeds block gas limit"
-TODO: we must resarch the gasLimit minimum value
-*******************************/
+#!/usr/bin/env node
 
 var path = require('path');
 var Web3 = require('web3');
@@ -17,15 +13,27 @@ var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
 
 var fs = require('fs');
 var srcDir = typeof(__dirname) == 'undefined' ? '' : __dirname;
-var content = fs.readFileSync(path.join(srcDir, "privacyTokenBase.sol"), 'utf8');
+
+let contractName = process.argv[2];
+if(!contractName){
+    contractName = "PrivacyTokenBase";
+}else{
+    let index = contractName.indexOf('.sol');
+    if(index){
+        contractName = contractName.slice(0,index);
+    }
+}
+
+console.log(contractName);
+var content = fs.readFileSync(path.join(srcDir, contractName+".sol"), 'utf8');
 
 //var content = fs.readFileSync("beida.js", 'utf8');
 var solc = require('solc');
 var compiled = solc.compile(content, 1);
-console.log(compiled);
-var myTestContract = web3.eth.contract(JSON.parse(compiled.contracts[':PrivacyTokenBase'].interface));
+//console.log(compiled);
+var myTestContract = web3.eth.contract(JSON.parse(compiled.contracts[':'+contractName].interface));
 
-console.log(compiled.contracts[':PrivacyTokenBase'].interface);
+console.log(compiled.contracts[':'+contractName].interface);
 
 var config_privatekey = 'a4369e77024c2ade4994a9345af5c47598c7cfb36c65e8a4a3117519883d9014';
 var config_pubkey = '0x2d0e7c0813a51d3bd1d08246af2a8a7a57d8922e';
@@ -36,7 +44,7 @@ var config_pubkey = '0x2d0e7c0813a51d3bd1d08246af2a8a7a57d8922e';
 let globalHash = "";
 	var constructorInputs = [];
 
-	constructorInputs.push({ data: compiled.contracts[':PrivacyTokenBase'].bytecode});
+	constructorInputs.push({ data: compiled.contracts[':'+contractName].bytecode});
 	var txData = myTestContract.new.getData.apply(null, constructorInputs);
 
 	//TODO: replace user's private key
@@ -73,7 +81,7 @@ let globalHash = "";
                     if(receipt){
                         filter.stopWatching();
                         console.log("contractAddress:"+receipt.contractAddress);
-                        fs.writeFileSync("./contractAddress", receipt.contractAddress);
+                        fs.writeFileSync(contractName+".addr", receipt.contractAddress);
                     }
                 }
             });
