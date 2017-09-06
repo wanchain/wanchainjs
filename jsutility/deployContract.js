@@ -19,7 +19,7 @@ if(!contractName){
     contractName = "PrivacyTokenBase";
 }else{
     let index = contractName.indexOf('.sol');
-    if(index){
+    if(index != -1){
         contractName = contractName.slice(0,index);
     }
 }

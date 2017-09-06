@@ -780,8 +780,8 @@ function _generateA1(RPrivateKeyDBytes, pubKeyA,  pubKeyB){
 }
 
 function _generateOTAPublicKey(pubKeyA, pubKeyB){
-  RPrivateKey = _generatePrivateKey();
-  A1 = _generateA1(RPrivateKey, pubKeyA, pubKeyB);
+  let RPrivateKey = _generatePrivateKey();
+  let A1 = _generateA1(RPrivateKey, pubKeyA, pubKeyB);
   return {
     OtaA1: exports.bufferToHex(A1).slice(4),
     OtaS1: exports.bufferToHex(exports.privateToPublic(RPrivateKey)).slice(2)

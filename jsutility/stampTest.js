@@ -59,21 +59,88 @@ function getTransactionReceipt(txHash)
     });
 }
 
+function caculateValue(type, instance){
+    let value = 0;
+    if(type == stampType.TypeOne){
+        value = 1 *instance.stampPrice.call();
+    }else if(type == stampType.TypeTwo) {
+        value = 2 *instance.stampPrice.call();
+    }else if(type == stampType.TypeFour) {
+        value = 4 *instance.stampPrice.call();
+    }else if(type == stampType.TypeEight) {
+        value = 8 *instance.stampPrice.call();
+    }else if(type == stampType.TypeSixteen) {
+        value = 16 *instance.stampPrice.call();
+    }else{
+        value = 0;
+    }
+    return value;
+}
 
 
+async function i_buyWanchainStamp(type, otaAddress,  otaKeyBytes){
 
-async function i_buyWanchainStamp(type, otaAddress,  otaKeyBytes,  senderPrivateKey){
-
-    var privateKey = new Buffer(senderPrivateKey, 'hex');//from.so_privatekey
+    var privateKey = new Buffer(config_privatekey, 'hex');
     var serial = '0x' + web3.eth.getTransactionCount(config_address).toString(16);
     let payload = contractInstance.buyStamp.getData(type, otaAddress,otaKeyBytes);
+    let stampValue = caculateValue(type, contractInstance);
+    console.log("stampValue: "+stampValue);
+    let hsValue = '0x'+stampValue.toString(16);
     var rawTx = {
-        Txtype: '0x0',
+        Txtype: '0x01',
         nonce: serial,
         gasPrice: '0x88745',
         gasLimit: '0x1000000',
         to: contractInstanceAddress,//contract address
-        value: '0x00',
+        value: hsValue,
+        data: payload
+    };
+    console.log("payload: " + rawTx.data);
+    console.log("value: " + hsValue);
+
+    var tx = new Tx(rawTx);
+    tx.sign(privateKey);
+    var serializedTx = tx.serialize();
+    let hash = web3.eth.sendRawTransaction('0x' + serializedTx.toString('hex'));
+    console.log("serializeTx" + serializedTx.toString('hex'));
+    console.log('tx hash:'+hash);
+    try {
+        let receipt = await getTransactionReceipt(hash);
+        console.log(receipt);
+        console.log("otaKeyBytes is "+otaKeyBytes);
+        if(type == stampType.TypeOne){
+            console.log("stamp type "+type+" total: "+contractInstance.StampCountOne.call());
+            console.log(otaAddress +" has stamp type "+type +" keyBytes "+contractInstance.StampListOne(otaAddress));
+        }else if(type == stampType.TypeTwo) {
+            console.log("stamp type "+type+" total: "+contractInstance.StampCountTwo.call());
+            console.log(otaAddress +" has stamp type "+type +" keyBytes "+contractInstance.StampListTwo(otaAddress));
+        }else if(type == stampType.TypeFour) {
+            console.log("stamp type "+type+" total: "+contractInstance.StampCountFour.call());
+            console.log(otaAddress +" has stamp type "+type +" keyBytes "+contractInstance.StampListFour(otaAddress));
+        }else if(type == stampType.TypeEight) {
+            console.log("stamp type "+type+" total: "+contractInstance.StampCountEight.call());
+            console.log(otaAddress +" has stamp type "+type +" keyBytes "+contractInstance.StampListEight(otaAddress));
+        }else if(type == stampType.TypeSixteen) {
+            console.log("stamp type "+type+" total: "+contractInstance.StampCountSixteen.call());
+            console.log(otaAddress +" has stamp type "+type +" keyBytes "+contractInstance.StampListSixteen(otaAddress));
+        }
+    }catch(e){
+        console.log(e);
+    }
+}
+
+async function i_setStampPrice(price){
+
+    var privateKey = new Buffer(config_privatekey, 'hex');
+    var serial = '0x' + web3.eth.getTransactionCount(config_address).toString(16);
+    let payload = contractInstance.setStampPrice.getData(price);
+    var rawTx = {
+        Txtype: '0x01',
+        nonce: serial,
+        gasPrice: '0x88745',
+        gasLimit: '0x1000000',
+        to: contractInstanceAddress,//contract address
+        value: "0x00",
         data: payload
     };
     console.log("payload: " + rawTx.data);
@@ -86,29 +153,54 @@ async function i_buyWanchainStamp(type, otaAddress,  otaKeyBytes,  senderPrivate
     console.log('tx hash:'+hash);
     try {
         let receipt = await getTransactionReceipt(hash);
+        console.log(receipt);
+        console.log("stamp price is : "+contractInstance.stampPrice.call());
     }catch(e){
         console.log(e);
     }
-    console.log(receipt);
 }
 
-
-
+function stampGetCountByType(type){
+    let count = 0;
+    if(type == stampType.TypeOne){
+        count = contractInstance.StampCountOne.call();
+    }else if(type == stampType.TypeTwo) {
+        count = contractInstance.StampCountTwo.call();
+    }else if(type == stampType.TypeFour) {
+        count = contractInstance.StampCountFour.call();
+    }else if(type == stampType.TypeEight) {
+        count = contractInstance.StampCountEight.call();
+    }else if(type == stampType.TypeSixteen) {
+        count = contractInstance.StampCountSixteen.call();
+    }else{
+        count = 0;
+    }
+    return count;
+}
 async function main(){
 
     /*
         1. generate a one time Key and compute corresponding private key
     */
     var pubkeyStr = ethUtil.publicKeyFromPrivateKey(config_privatekey);
-    var ota = ethUtil.generateOTAPublicKey(pubkeyStr, pubkeyStr);
-    var bufOTAPrivate = ethUtil.computeOTAPrivateKey(ota.OtaA1, ota.OtaS1, config_privatekey,config_privatekey);
-    var otaKeyBytesCompressed = ethUtil.pubkeyStrCompressed(ota.OtaA1) + ethUtil.pubkeyStrCompressed(ota.OtaS1).slice(2);
-    var otaAddress = ethUtil.bufferToHex(ethUtil.publicToAddress('0x' + ota.OtaA1));
 
-    /*
-        2. buy the wanchain stamp
-     */
-    await i_buyWanchainStamp(stampType.TypeTwo, otaAddress, otaKeyBytesCompressed, ethUtil.bufferToHex(bufOTAPrivate).slice(2));
+    await i_setStampPrice(2000);
+    let type = stampType.TypeFour;
+    for(let i=0; i<7; i++){
+        var ota = ethUtil.generateOTAPublicKey(pubkeyStr, pubkeyStr);
+        var otaAddress = ethUtil.bufferToHex(ethUtil.publicToAddress('0x' + ota.OtaA1));
+        var otaKeyBytesCompressed = ethUtil.pubkeyStrCompressed(ota.OtaA1) + ethUtil.pubkeyStrCompressed(ota.OtaS1).slice(2);
+        await i_buyWanchainStamp(type, otaAddress, otaKeyBytesCompressed);
+    }
+
+    let countType = stampGetCountByType(type);
+    console.log("Stamp of type "+type+" total "+countType);
+    let index = Math.floor(Math.random()*countType);
+    let scAddr = contractInstance.StampArrayFour.call(index);
+    let scKeyBytes = contractInstance.StampListFour.call(scAddr);
+    console.log("the stamp(type:"+type+",index:"+index+") addr is "+scAddr
+        +" keybytes is "+ scKeyBytes);
+
 
 //check the balance of otaDestAddress
 }
